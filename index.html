@@ -1,0 +1,2613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight Systems Lab — Landing-Gear Position Control · v6</title>
+<style>
+:root {
+  --bg:#080d17;
+  --panel:#101827;
+  --panel2:#0c1421;
+  --line:#263449;
+  --text:#edf4ff;
+  --muted:#8fa2bd;
+  --cyan:#5ce1e6;
+  --lime:#c8ff6b;
+  --orange:#ffb86b;
+  --red:#ff7187;
+  --purple:#a99bff;
+  --shadow:0 18px 55px #0005
+}
+* {
+  box-sizing:border-box
+}
+html {
+  scroll-behavior:smooth
+}
+body {
+  margin:0;
+  background:radial-gradient(ellipse at 80% 0%,#16304b 0,transparent 33%),radial-gradient(ellipse at 0% 30%,#102c30 0,transparent 27%),var(--bg);
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  min-height:100vh
+}
+body:before {
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:linear-gradient(#ffffff05 1px,transparent 1px),linear-gradient(90deg,#ffffff05 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:linear-gradient(to bottom,#000 0%,transparent 85%);
+  z-index:-1
+}
+.wrap {
+  width:min(1240px,calc(100% - 34px));
+  margin:auto
+}
+.topbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:22px 0;
+  border-bottom:1px solid #ffffff13;
+  gap:16px
+}
+.brand {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:850;
+  letter-spacing:.12em;
+  font-size:12px
+}
+.brandmark {
+  width:36px;
+  height:36px;
+  border:1px solid #5ce1e688;
+  border-radius:11px;
+  display:grid;
+  place-items:center;
+  background:#5ce1e610;
+  color:var(--cyan);
+  font-size:20px
+}
+.top-meta {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  color:var(--muted);
+  font:11px ui-monospace,monospace;
+  letter-spacing:.08em
+}
+.pill {
+  padding:7px 10px;
+  border:1px solid #2e455b;
+  border-radius:999px;
+  background:#0d1a28;
+  color:var(--cyan);
+  white-space:nowrap
+}
+.hero {
+  padding:42px 0 27px;
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:20px
+}
+.eyebrow {
+  font:11px ui-monospace,monospace;
+  color:var(--lime);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:14px
+}
+.hero h1 {
+  font-size:clamp(35px,5.3vw,65px);
+  line-height:.98;
+  letter-spacing:-.055em;
+  margin:0;
+  max-width:800px
+}
+.hero h1 span {
+  color:var(--cyan)
+}
+.hero p {
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.7;
+  max-width:680px;
+  margin:18px 0 0
+}
+.hero-right {
+  min-width:190px;
+  text-align:right;
+  padding-bottom:4px
+}
+.live-dot {
+  display:inline-block;
+  width:8px;
+  height:8px;
+  background:var(--lime);
+  border-radius:50%;
+  box-shadow:0 0 13px #c8ff6b80;
+  margin-right:8px
+}
+.hero-right strong {
+  display:block;
+  font-size:12px;
+  letter-spacing:.13em
+}
+.hero-right small {
+  display:block;
+  color:var(--muted);
+  font:11px ui-monospace,monospace;
+  margin-top:8px
+}
+.connect-row {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  flex-wrap:wrap;
+  margin:15px 0 24px
+}
+.btn {
+  border:0;
+  border-radius:10px;
+  padding:12px 16px;
+  background:var(--cyan);
+  color:#041217;
+  font-weight:850;
+  font-size:12px;
+  cursor:pointer;
+  transition:.18s;
+  box-shadow:0 5px 22px #5ce1e61b
+}
+.btn:hover {
+  transform:translateY(-1px);
+  filter:brightness(1.08)
+}
+.btn.secondary {
+  background:#172437;
+  color:var(--text);
+  border:1px solid #34485f;
+  box-shadow:none
+}
+.btn.small {
+  padding:9px 12px;
+  font-size:11px
+}
+.connection-note {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45
+}
+.grid {
+  display:grid;
+  grid-template-columns:.78fr 1.72fr;
+  gap:18px
+}
+.panel {
+  background:linear-gradient(145deg,#121d2cF2,#0b1320F2);
+  border:1px solid #ffffff15;
+  border-radius:17px;
+  box-shadow:var(--shadow);
+  overflow:hidden
+}
+.panel-head {
+  padding:17px 19px;
+  border-bottom:1px solid #ffffff10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px
+}
+.panel-head h2 {
+  font-size:13px;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  margin:0
+}
+.panel-head span {
+  color:var(--muted);
+  font:10px ui-monospace,monospace
+}
+.panel-body {
+  padding:19px
+}
+.kicker {
+  color:var(--muted);
+  font:10px ui-monospace,monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase
+}
+.gauge-area {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:10px 0 3px
+}
+.gauge-svg {
+  width:min(100%,285px);
+  height:auto;
+  overflow:visible
+}
+.angle-big {
+  font-size:40px;
+  font-weight:850;
+  letter-spacing:-.06em;
+  fill:var(--text)
+}
+.angle-caption {
+  font:11px ui-monospace,monospace;
+  fill:var(--muted);
+  letter-spacing:.12em
+}
+.gauge-bottom {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:10px
+}
+.mini-metric {
+  background:#ffffff05;
+  border:1px solid #ffffff0e;
+  border-radius:12px;
+  padding:13px
+}
+.mini-metric span {
+  display:block;
+  color:var(--muted);
+  font:10px ui-monospace,monospace;
+  text-transform:uppercase;
+  letter-spacing:.1em
+}
+.mini-metric strong {
+  font-size:22px;
+  display:block;
+  margin-top:5px;
+  letter-spacing:-.04em
+}
+.mini-metric em {
+  font-style:normal;
+  font-size:11px;
+  color:var(--muted);
+  font-weight:500
+}
+.status-line {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #ffffff10;
+  font-size:11px;
+  color:var(--muted)
+}
+.status-line b {
+  color:var(--lime);
+  font-weight:650
+}
+.chart-tools {
+  display:flex;
+  gap:6px;
+  align-items:center
+}
+.legend {
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:10px;
+  color:var(--muted);
+  font-size:10px
+}
+.legend i {
+  display:inline-block;
+  width:17px;
+  height:3px;
+  border-radius:2px;
+  vertical-align:middle;
+  margin-right:5px
+}
+.plot {
+  width:100%;
+  height:430px;
+  display:block
+}
+.plot-small {
+  height:460px
+}
+.chart-foot {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  color:var(--muted);
+  font-size:10px;
+  font-family:ui-monospace,monospace;
+  margin-top:8px
+}
+.section-title {
+  margin:39px 0 15px;
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:15px
+}
+.section-title h2 {
+  margin:0;
+  font-size:23px;
+  letter-spacing:-.04em
+}
+.section-title p {
+  margin:7px 0 0;
+  color:var(--muted);
+  font-size:12px
+}
+.section-index {
+  font:11px ui-monospace,monospace;
+  color:var(--cyan);
+  letter-spacing:.12em
+}
+.controller-layout {
+  display:grid;
+  grid-template-columns:1.28fr .92fr;
+  gap:18px
+}
+.mode-tabs {
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+  padding:15px 18px 0
+}
+.mode-btn {
+  border:1px solid #2a3b50;
+  background:#101a29;
+  color:#bdc9dc;
+  border-radius:9px;
+  padding:10px 5px;
+  font-weight:850;
+  cursor:pointer
+}
+.mode-btn.active {
+  color:#041217;
+  background:var(--lime);
+  border-color:var(--lime);
+  box-shadow:0 0 20px #c8ff6b16
+}
+.mode-btn.compare-btn {
+  border-color:#a99bff66;
+  color:#c8c0ff
+}
+.mode-btn.compare-btn.active {
+  background:var(--purple);
+  border-color:var(--purple);
+  color:#080d17
+}
+.mode-btn small {
+  display:block;
+  font-size:9px;
+  font-weight:600;
+  margin-top:3px;
+  opacity:.8
+}
+.sim-info {
+  padding:0 19px 17px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:11px
+}
+.sim-info b {
+  color:var(--cyan)
+}
+.theory-stack {
+  display:grid;
+  gap:9px
+}
+.theory {
+  border:1px solid #ffffff12;
+  background:#ffffff04;
+  padding:13px;
+  border-radius:11px;
+  display:grid;
+  grid-template-columns:42px 1fr;
+  gap:11px
+}
+.theory-symbol {
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#5ce1e610;
+  color:var(--cyan);
+  font-size:13px;
+  font-weight:900
+}
+.theory h3 {
+  font-size:12px;
+  margin:1px 0 4px
+}
+.theory p {
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.55;
+  margin:0
+}
+.formula {
+  font:12px ui-monospace,monospace;
+  line-height:1.8;
+  color:var(--lime);
+  padding:14px;
+  background:#080f19;
+  border:1px solid #ffffff10;
+  border-radius:10px;
+  overflow-wrap:anywhere
+}
+.callout {
+  margin-top:14px;
+  border-left:3px solid var(--orange);
+  background:#ffb86b0b;
+  padding:12px 14px;
+  border-radius:0 9px 9px 0;
+  color:#c9d4e4;
+  font-size:11px;
+  line-height:1.65
+}
+.callout strong {
+  color:var(--orange)
+}
+.flow {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:9px
+}
+.flow-step {
+  position:relative;
+  border:1px solid #ffffff14;
+  border-radius:12px;
+  padding:15px;
+  background:#ffffff04;
+  min-height:110px
+}
+.flow-step:not(:last-child):after {
+  content:"→";
+  position:absolute;
+  right:-12px;
+  top:38px;
+  color:var(--cyan);
+  z-index:2;
+  background:var(--bg);
+  padding:0 2px
+}
+.flow-step .num {
+  font:10px ui-monospace,monospace;
+  color:var(--cyan)
+}
+.flow-step strong {
+  display:block;
+  font-size:12px;
+  margin:10px 0 6px
+}
+.flow-step p {
+  margin:0;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.55
+}
+.footer {
+  margin:30px 0 24px;
+  border-top:1px solid #ffffff14;
+  padding:17px 0 25px;
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.6
+}
+.footer b {
+  color:var(--text)
+}
+.tag {
+  font:10px ui-monospace,monospace;
+  color:var(--lime);
+  border:1px solid #c8ff6b44;
+  padding:5px 8px;
+  border-radius:5px
+}
+.small-muted {
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.6
+}
+.notice {
+  display:none;
+  margin:10px 0 0;
+  padding:11px 13px;
+  border-radius:9px;
+  background:#ff718713;
+  border:1px solid #ff718740;
+  color:#ffc5cf;
+  font-size:11px;
+  line-height:1.5
+}
+.notice.show {
+  display:block
+}
+.help {
+  cursor:help;
+  border-bottom:1px dotted #8192a8
+}
+.no-data {
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:#6f829c;
+  font-size:12px;
+  pointer-events:none
+}
+.chart-wrap {
+  position:relative
+}
+.chart-wrap canvas {
+  position:relative;
+  z-index:1
+}
+.chart-wrap .no-data {
+  z-index:0
+}
+.metrics3 {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:12px
+}
+.metrics3 .mini-metric strong {
+  font-size:18px
+}
+.metrics3 .mini-metric {
+  padding:10px
+}
+.microcopy {
+  font-size:10px;
+  color:var(--muted);
+  line-height:1.6;
+  margin-top:9px
+}
+.selected-controller {
+  margin:12px 18px 0;
+  padding:14px 16px;
+  border:1px solid #5ce1e655;
+  border-radius:12px;
+  background:linear-gradient(105deg,#5ce1e610,#a99bff0a);
+  min-height:84px
+}
+.selected-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap
+}
+.selected-top span:first-child {
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.1em;
+  color:var(--cyan)
+}
+.selected-top span:last-child {
+  font:10px ui-monospace,monospace;
+  color:var(--lime)
+}
+.selected-controller p {
+  margin:8px 0 0;
+  color:#bfcee2;
+  font-size:12px;
+  line-height:1.6
+}
+.theory.selected {
+  border-color:#5ce1e699;
+  background:#5ce1e60d;
+  box-shadow:inset 3px 0 0 var(--cyan)
+}
+@media(max-width:850px) {
+  .grid {
+    grid-template-columns:1fr
+  }
+  .plot {
+    height:360px
+  }
+  .plot-small {
+    height:380px
+  }
+  .selected-controller {
+    margin-left:12px;
+    margin-right:12px
+  }
+}
+@media(max-width:850px) {
+  .grid,.controller-layout {
+    grid-template-columns:1fr
+  }
+  .hero {
+    align-items:start;
+    flex-direction:column
+  }
+  .hero-right {
+    text-align:left
+  }
+  .flow {
+    grid-template-columns:repeat(2,1fr)
+  }
+  .flow-step:nth-child(2):after {
+    display:none
+  }
+  .plot {
+    height:340px
+  }
+  .plot-small {
+    height:370px
+  }
+}
+@media(max-width:520px) {
+  .mode-tabs {
+    grid-template-columns:repeat(3,1fr)
+  }
+  .wrap {
+    width:min(100% - 22px,1240px)
+  }
+  .topbar {
+    align-items:start
+  }
+  .top-meta {
+    display:none
+  }
+  .hero {
+    padding-top:30px
+  }
+  .panel-body {
+    padding:14px
+  }
+  .panel-head {
+    padding:15px
+  }
+  .mode-tabs {
+    padding-left:12px;
+    padding-right:12px
+  }
+  .mode-btn {
+    font-size:12px
+  }
+  .mode-btn small {
+    font-size:8px
+  }
+  .flow {
+    grid-template-columns:1fr
+  }
+  .flow-step:after {
+    display:none!important
+  }
+  .plot {
+    height:300px
+  }
+  .plot-small {
+    height:330px
+  }
+  .gauge-bottom {
+    gap:7px
+  }
+  .mini-metric strong {
+    font-size:19px
+  }
+}
+</style>
+
+<style id="editorial-engineering-theme">
+:root {
+  --bg:#f5f6f3;
+  --panel:#ffffff;
+  --panel2:#ffffff;
+  --line:#dce3dd;
+  --text:#202923;
+  --muted:#657169;
+  --cyan:#286d63;
+  --lime:#dcece4;
+  --orange:#b86c31;
+  --red:#b64545;
+  --purple:#6d6795;
+  --shadow:0 2px 10px #22352b0a
+}
+html {
+  scroll-behavior:smooth
+}
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif
+}
+body:before {
+  display:none
+}
+.wrap {
+  width:min(1370px,calc(100% - 42px))
+}
+.topbar {
+  border-bottom:1px solid var(--line)
+}
+.brand {
+  letter-spacing:.07em
+}
+.brandmark {
+  border:1px solid #c9d7cf;
+  background:#edf3ef;
+  color:#2d675e;
+  border-radius:7px
+}
+.top-meta {
+  color:#68766d
+}
+.pill {
+  background:white;
+  color:#315d51;
+  border:1px solid #d3ddd6
+}
+.hero {
+  padding-top:35px
+}
+.eyebrow,.section-index,.flow-step .num {
+  color:#3e7569
+}
+.hero h1 {
+  font-weight:720;
+  letter-spacing:-.045em
+}
+.hero h1 span {
+  color:#31756a
+}
+.hero p {
+  color:#58665d;
+  max-width:790px
+}
+.live-dot {
+  background:#387b6d!important;
+  box-shadow:none!important
+}
+.hero-right strong {
+  letter-spacing:.07em
+}
+.hero-right small {
+  color:#667269
+}
+.btn {
+  background:#2b665b;
+  color:#fff;
+  box-shadow:none;
+  border-radius:6px;
+  font-weight:700
+}
+.btn:hover {
+  filter:brightness(.96)
+}
+.btn.secondary {
+  background:#fff;
+  color:#33463c;
+  border:1px solid #d3ddd6
+}
+.panel {
+  background:#fff;
+  border:1px solid #dde4de;
+  border-radius:8px;
+  box-shadow:0 2px 10px #19352506
+}
+.panel-head {
+  border-bottom:1px solid #e6ebe7
+}
+.panel-head h2 {
+  letter-spacing:.045em;
+  color:#303d35
+}
+.panel-head span {
+  color:#647268
+}
+.mini-metric {
+  background:#f8faf8;
+  border:1px solid #e3e9e4;
+  border-radius:6px
+}
+.mini-metric span {
+  color:#657169;
+  letter-spacing:.04em
+}
+.mini-metric strong {
+  color:#1e2c24
+}
+.status-line {
+  border-top:1px solid #e6ebe7
+}
+.status-line b {
+  color:#2a7060
+}
+.plot {
+  height:445px
+}
+.plot-small {
+  height:480px
+}
+.controller-layout {
+  grid-template-columns:1.2fr .8fr
+}
+.mode-tabs {
+  gap:7px
+}
+.mode-btn {
+  background:white;
+  color:#36443b;
+  border:1px solid #d5ded7;
+  border-radius:6px
+}
+.mode-btn:hover:not(:disabled) {
+  background:#f4f8f5
+}
+.mode-btn.active {
+  color:#184d41;
+  background:#e7f2ec;
+  border-color:#9bbcaf;
+  box-shadow:none
+}
+.mode-btn.compare-btn {
+  border-color:#b9b3d6;
+  color:#625b8b
+}
+.mode-btn.compare-btn.active {
+  background:#efedf7;
+  border-color:#b8b0d6;
+  color:#504779
+}
+.mode-btn:disabled {
+  opacity:.48;
+  cursor:not-allowed;
+  transform:none
+}
+.selected-controller {
+  background:#f6faf7;
+  border:1px solid #dce9e0;
+  border-radius:6px
+}
+.selected-top span:first-child {
+  color:#2d6d62
+}
+.selected-top span:last-child {
+  color:#5a6c61
+}
+.selected-controller p {
+  color:#546259
+}
+.theory {
+  background:#fff;
+  border:1px solid #e0e7e1;
+  border-radius:6px
+}
+.theory.selected {
+  border-color:#95b8a8;
+  background:#f2f8f4;
+  box-shadow:inset 3px 0 0 #468775
+}
+.theory h3 {
+  color:#26382e
+}
+.theory p {
+  color:#5d6a61
+}
+.formula {
+  color:#265b4f;
+  background:#f6f8f6;
+  border:1px solid #dfe7e1;
+  border-radius:6px
+}
+.callout {
+  background:#f6f8f4;
+  border-left-color:#b07a43;
+  color:#526057;
+  border-radius:0 5px 5px 0
+}
+.callout strong {
+  color:#8e5a2c
+}
+.tag {
+  color:#326c5e;
+  border-color:#c9ddd3;
+  border-radius:4px
+}
+.flow-step {
+  background:#fff;
+  border:1px solid #dfe6e0;
+  border-radius:7px
+}
+.flow-step:not(:last-child):after {
+  background:var(--bg);
+  color:#4f7a6e
+}
+.flow-step p {
+  color:#5f6c62
+}
+.footer {
+  border-top:1px solid #dce3dd;
+  color:#637067
+}
+.footer b {
+  color:#26362c
+}
+.notice {
+  background:#fff5f2;
+  border:1px solid #e8c9c2;
+  color:#8a3e32;
+  border-radius:5px
+}
+.no-data {
+  color:#6e7d72
+}
+.chart-foot,.legend {
+  color:#626f66
+}
+.engineering-section {
+  margin-top:40px
+}
+.engineering-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px
+}
+.engineering-card {
+  height:100%
+}
+.engineering-card .panel-body {
+  padding:20px
+}
+.wide-card {
+  grid-column:1/-1
+}
+.plain-copy {
+  font-size:13px;
+  line-height:1.7;
+  color:#4c5b51;
+  margin:0 0 13px
+}
+.plain-copy:last-child {
+  margin-bottom:0
+}
+.equation {
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:19px;
+  line-height:1.8;
+  color:#203d32;
+  background:#f7f9f7;
+  border:1px solid #e1e8e2;
+  border-radius:5px;
+  padding:13px 15px;
+  margin:10px 0;
+  overflow-wrap:anywhere
+}
+.equation-sub {
+  font-size:15px;
+  color:#5a695f
+}
+.parameters {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin:14px 0
+}
+.parameters div {
+  border:1px solid #e1e8e2;
+  background:#fafbfa;
+  border-radius:5px;
+  padding:10px
+}
+.parameters span {
+  font-size:12px;
+  color:#607066
+}
+.parameters strong {
+  display:block;
+  font-size:20px;
+  color:#263d31;
+  margin:5px 0
+}
+.parameters small {
+  font-size:10px;
+  color:#69766e;
+  line-height:1.4
+}
+.equation-list {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px 14px
+}
+.equation-list>div>strong {
+  display:block;
+  font-size:13px;
+  color:#286d63;
+  margin-bottom:4px
+}
+.equation-list .equation {
+  font-size:15px;
+  margin:0
+}
+.mapping-list {
+  margin:0;
+  display:grid;
+  gap:0
+}
+.mapping-list>div {
+  display:grid;
+  grid-template-columns:115px 1fr;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid #edf0ed
+}
+.mapping-list>div:last-child {
+  border-bottom:0
+}
+.mapping-list dt {
+  font-weight:700;
+  color:#31594a;
+  font-size:12px
+}
+.mapping-list dd {
+  margin:0;
+  color:#57655b;
+  font-size:12px;
+  line-height:1.55
+}
+.note-box {
+  background:#f8f7f2;
+  border:1px solid #eae4d4;
+  border-radius:5px;
+  padding:12px;
+  font-size:12px;
+  line-height:1.6;
+  color:#605b4b;
+  margin-top:15px
+}
+.note-box strong {
+  color:#655331
+}
+.references {
+  margin-top:14px
+}
+.refs-list p {
+  font-size:12px;
+  line-height:1.6;
+  margin:0 0 10px;
+  color:#59665d
+}
+.refs-list p:last-child {
+  margin-bottom:0
+}
+.refs-list a {
+  color:#245f53;
+  text-decoration:underline;
+  text-underline-offset:2px
+}
+.metrics-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px
+}
+.metrics-grid .mini-metric {
+  padding:11px
+}
+.metrics-grid .mini-metric strong {
+  font-size:19px
+}
+.table-wrap {
+  margin-top:17px;
+  border:1px solid #e0e7e1;
+  border-radius:6px;
+  overflow-x:auto
+}
+.table-heading {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 12px;
+  background:#f7f9f7;
+  border-bottom:1px solid #e0e7e1;
+  font-size:12px;
+  font-weight:700;
+  color:#34483a
+}
+.table-heading span {
+  font-size:10px;
+  color:#758077;
+  font-weight:400
+}
+.results-table {
+  width:100%;
+  border-collapse:collapse;
+  min-width:650px;
+  font-size:11px
+}
+.results-table th,.results-table td {
+  text-align:right;
+  padding:10px 8px;
+  border-bottom:1px solid #e8ede9;
+  white-space:nowrap
+}
+.results-table thead th {
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#657168;
+  background:#fbfcfb;
+  font-weight:700
+}
+.results-table tbody th {
+  text-align:left;
+  color:#2e5144
+}
+.results-table td {
+  font-variant-numeric:tabular-nums;
+  color:#46564b
+}
+.results-table tr:last-child th,.results-table tr:last-child td {
+  border-bottom:0
+}
+.results-table tbody tr:nth-child(even) {
+  background:#fbfcfb
+}
+.metrics3 {
+  display:none
+}
+.run-actions {
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+.run-actions #runBadge {
+  font:10px ui-monospace,monospace;
+  color:#647268
+}
+.btn.small {
+  padding:7px 10px
+}
+.btn:disabled {
+  opacity:.45;
+  cursor:not-allowed
+}
+.engineering-section .section-title {
+  margin-top:30px
+}
+@media(max-width:900px) {
+  .engineering-grid {
+    grid-template-columns:1fr
+  }
+  .wide-card {
+    grid-column:auto
+  }
+  .equation-list {
+    grid-template-columns:1fr
+  }
+  .metrics-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .controller-layout {
+    grid-template-columns:1fr
+  }
+}
+@media(max-width:520px) {
+  .wrap {
+    width:calc(100% - 22px)
+  }
+  .plot {
+    height:330px
+  }
+  .plot-small {
+    height:370px
+  }
+  .parameters {
+    grid-template-columns:repeat(2,1fr)
+  }
+  .mapping-list>div {
+    grid-template-columns:95px 1fr
+  }
+  .topbar {
+    padding:16px 0
+  }
+  .metrics-grid .mini-metric strong {
+    font-size:16px
+  }
+}
+</style>
+
+
+<style id="v5-polish">
+:root {
+  --bg:#f5f7f5;
+  --panel:#ffffff;
+  --panel2:#f8faf8;
+  --line:#dce4dd;
+  --text:#1e2b23;
+  --muted:#657168;
+  --cyan:#2b665b;
+  --lime:#d9e8df;
+  --orange:#b5773e;
+  --red:#b44a4a;
+  --purple:#6a6097;
+  --shadow:0 2px 10px rgba(25,53,37,.045)
+}
+body {
+  background:#f5f7f5;
+  color:#1e2b23;
+  font-family:Arial,Helvetica,sans-serif
+}
+body:before {
+  display:none
+}
+.wrap {
+  width:min(1380px,calc(100% - 42px))
+}
+.brandmark {
+  font-size:12px;
+  letter-spacing:0
+}
+.hero h1 {
+  font-size:clamp(34px,4.4vw,54px);
+  line-height:1.02;
+  letter-spacing:-.04em
+}
+.hero p {
+  font-size:14px;
+  line-height:1.7
+}
+.panel {
+  background:#fff;
+  border-color:#dce4dd;
+  border-radius:7px;
+  box-shadow:0 2px 10px rgba(25,53,37,.045)
+}
+.panel-head {
+  border-color:#e6ebe7
+}
+.panel-head h2 {
+  text-transform:none;
+  letter-spacing:.015em;
+  font-size:13px
+}
+.btn {
+  border-radius:5px;
+  background:#2b665b;
+  color:#fff
+}
+.btn.secondary {
+  background:#fff;
+  color:#34463b;
+  border-color:#d3ddd6
+}
+.mode-btn {
+  border-radius:5px
+}
+.mode-btn.active {
+  background:#e7f2ec;
+  border-color:#9bbcaf;
+  color:#184d41
+}
+.selected-controller {
+  background:#f6faf7;
+  border-color:#dce9e0;
+  border-radius:5px
+}
+.theory,.flow-step,.mini-metric,.formula,.equation {
+  border-radius:5px
+}
+.theory-symbol {
+  color:#2b665b!important;
+  background:#edf4ef!important
+}
+.theory p,.flow-step p,.plain-copy {
+  color:#546258
+}
+.formula {
+  color:#2b665b;
+  background:#f6f8f6;
+  border-color:#dfe7e1
+}
+.equation {
+  background:#f7f9f7;
+  border-color:#e1e8e2;
+  color:#203d32
+}
+.callout {
+  background:#f7f8f5;
+  color:#536057;
+  border-radius:0 4px 4px 0
+}
+.flow-step:not(:last-child):after {
+  background:#f5f7f5
+}
+.gauge-svg {
+  max-width:270px
+}
+.metrics-grid .mini-metric strong {
+  font-size:18px
+}
+.section-title h2 {
+  font-size:24px;
+  letter-spacing:-.025em
+}
+.section-index {
+  font-family:Arial,Helvetica,sans-serif;
+  letter-spacing:.04em
+}
+.topbar {
+  border-color:#dce3dd
+}
+.footer {
+  border-color:#dce3dd
+}
+.manual-help {
+  margin-top:11px;
+  border:1px solid #dde6df;
+  background:#f6f9f6;
+  padding:11px 12px;
+  border-radius:5px;
+  color:#516057;
+  font-size:12px;
+  line-height:1.55
+}
+.manual-help strong {
+  color:#2b665b
+}
+.plain-copy strong {
+  color:#243a2d
+}
+@media(max-width:850px) {
+  .wrap {
+    width:calc(100% - 24px)
+  }
+  .hero {
+    padding-top:25px
+  }
+  .controller-layout {
+    grid-template-columns:1fr
+  }
+}
+</style>
+
+<style id="v6-controls-and-metrics">
+.target-controls {
+  display:flex;
+  align-items:end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:11px;
+  padding:12px;
+  border:1px solid #dce5de;
+  background:#fbfcfb;
+  border-radius:5px
+}
+.target-controls label {
+  font-size:11px;
+  font-weight:700;
+  color:#4f6256;
+  display:block;
+  flex-basis:100%
+}
+.target-controls input {
+  width:92px;
+  padding:9px 10px;
+  border:1px solid #cbd8ce;
+  border-radius:5px;
+  font:600 14px Arial,Helvetica,sans-serif;
+  color:#213a2d;
+  background:#fff
+}
+.target-controls .btn {
+  min-height:34px
+}
+.pid-focus-row {
+  display:flex;
+  justify-content:center;
+  padding:15px 18px 0
+}
+.pid-featured {
+  width:min(100%,420px);
+  padding:13px 16px;
+  background:#e9f2ec;
+  border:1.5px solid #9abbaa;
+  color:#285b4e;
+  font-size:15px
+}
+.pid-featured small {
+  display:block;
+  font-size:10px;
+  font-weight:500;
+  margin-top:4px
+}
+.pid-featured.active {
+  background:#d9e9de;
+  border-color:#2b665b;
+  color:#194d40;
+  box-shadow:inset 0 -3px 0 #2b665b
+}
+.mode-tabs {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  padding-top:9px
+}
+.mode-btn {
+  min-height:42px
+}
+.metrics-grid {
+  grid-template-columns:repeat(4,minmax(0,1fr))
+}
+#metricSSPct {
+  color:#2b665b
+}
+@media(max-width:850px) {
+  .pid-focus-row {
+    padding-left:12px;
+    padding-right:12px
+  }
+  .target-controls input {
+    width:88px
+  }
+}
+@media(max-width:620px) {
+  .target-controls {
+    align-items:stretch
+  }
+  .target-controls input,.target-controls .btn {
+    flex:1
+  }
+  .mode-tabs {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .metrics-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand"><div class="brandmark">FL</div><div>FLIGHT SYSTEMS LAB <div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.18em;margin-top:4px">CONTROL SYSTEMS / POSITIONING MODEL</div></div></div>
+    <div class="top-meta"><span>ARDUINO UNO</span><span>•</span><span>SG90 ACTUATOR</span><span>•</span><span class="pill">LOCAL DEMO</span></div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">MECHANICAL ENGINEERING · CONTROL LAB</div>
+      <h1>Landing-gear<br><span>position control.</span></h1>
+      <p>An Arduino-hosted comparison of P, PI, PD and PID control for a simplified landing-gear positioning model. Each run starts at 20° (retracted) and moves toward a fixed reference—90° by default (deployed). Set the reference exactly, watch the 12-second response, and compare the measured simulation metrics. The potentiometer is for manual indicator positioning; the SG90 is not a shaft-angle sensor.</p>
+      <div class="connect-row">
+        <button id="connectBtn" class="btn">Connect Arduino</button>
+        <button id="manualBtn" class="btn secondary" disabled>Manual knob control</button>
+        <button id="centerBtn" class="btn secondary" disabled>Centre indicator at 90°</button>
+        <button id="clearBtn" class="btn secondary">Clear live trace</button>
+        <span class="connection-note" id="connectText">Not connected · Chrome or Edge desktop recommended</span>
+      </div>
+      <div id="browserNotice" class="notice"></div>
+    </div>
+    <div class="hero-right"><strong><span id="liveDot" class="live-dot" style="background:var(--orange);box-shadow:none"></span><span id="liveStatus">AWAITING DATA</span></strong><small id="portStatus">SERIAL · 115200 BAUD</small><small id="uptime">SESSION 00:00</small></div>
+  </section>
+
+  <section class="grid">
+    <article class="panel">
+      <div class="panel-head"><h2>01 / Live angle tracker</h2><span>HARDWARE STREAM</span></div>
+      <div class="panel-body">
+        <div class="kicker" id="angleKicker">Manual position / indicator angle</div>
+        <div class="gauge-area">
+          <svg class="gauge-svg" viewBox="0 0 320 245" role="img" aria-label="Servo commanded angle gauge">
+            <defs><linearGradient id="arcGrad"><stop offset="0%" stop-color="#2b665b"/><stop offset="100%" stop-color="#a9c7b6"/></linearGradient></defs>
+            <path d="M 43 190 A 117 117 0 0 1 277 190" fill="none" stroke="#d6e0d8" stroke-width="13" stroke-linecap="round"/>
+            <path id="gaugeArc" d="M 43 190 A 117 117 0 0 1 277 190" fill="none" stroke="url(#arcGrad)" stroke-width="13" stroke-linecap="round" stroke-dasharray="0 368"/>
+            <g stroke="#71849e" stroke-width="2" opacity=".8">
+              <line x1="49" y1="185" x2="61" y2="181"/><line x1="76" y1="112" x2="85" y2="121"/><line x1="159" y1="73" x2="159" y2="86"/><line x1="243" y1="112" x2="233" y2="121"/><line x1="270" y1="185" x2="258" y2="181"/>
+            </g>
+            <g id="needle" transform="rotate(-90 160 190)"><line x1="160" y1="190" x2="160" y2="94" stroke="#24362c" stroke-width="3" stroke-linecap="round"/><circle cx="160" cy="190" r="8" fill="#2b665b" stroke="#ffffff" stroke-width="2"/></g>
+            <text x="43" y="215" font-size="10" fill="#64716a" text-anchor="middle">0°</text><text x="277" y="215" font-size="10" fill="#64716a" text-anchor="middle">180°</text>
+            <text id="angleText" x="160" y="157" text-anchor="middle" class="angle-big">—°</text>
+            <text id="angleCaption" x="160" y="174" text-anchor="middle" class="angle-caption">MANUAL ALIGN</text>
+          </svg>
+        </div>
+          <div class="gauge-bottom">
+          <div class="mini-metric"><span>Potentiometer ADC</span><strong id="adcValue">— <em>/ 1023</em></strong><div class="small-muted">A0 input reading · manual knob only</div></div>
+          <div class="mini-metric"><span>Run reference</span><strong id="degValue">90<em> °</em></strong><div class="small-muted">Exact setpoint, independent of knob</div></div>
+        </div>
+        <div class="target-controls">
+          <label for="targetInput">Reference angle (20°–160°)</label>
+          <input id="targetInput" type="number" min="20" max="160" step="1" value="90" inputmode="decimal" aria-label="Target reference angle in degrees">
+          <button id="applyTargetBtn" class="btn secondary small">Set reference</button>
+          <button id="resetTargetBtn" class="btn secondary small">Reset to 90°</button>
+        </div>
+        <div class="status-line"><span>Controller / source</span><b id="signalSource">Waiting for Arduino</b></div>
+        <div class="callout"><strong>Deployment sequence:</strong> each test starts with the model at 20° (representing a retracted gear) and responds toward the selected reference, 90° by default (representing deployed). Use the knob only in Manual knob control; use the numeric reference field for repeatable tests. The angles are illustrative display positions, not aircraft-specific geometry.</div><div class="microcopy"><strong>Measurement note:</strong> The Arduino simulates the plant state; the SG90 follows it as a visual indicator. Its three-wire interface does not report independent shaft angle.</div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head"><h2>02 / Enlarged live response</h2><div class="chart-tools"><span id="liveCount">0 samples</span></div></div>
+      <div class="panel-body">
+        <div class="kicker">Simulated output and reference vs time</div>
+        <div class="chart-wrap"><canvas id="liveChart" class="plot" aria-label="Live command angle graph"></canvas><div id="liveEmpty" class="no-data">Connect Arduino, turn the knob to set a target,<br>then click P, PI, PD or PID below.<br><span style="font-size:10px;opacity:.7">The response will draw here in real time.</span></div></div>
+        <div class="legend"><span><i style="background:var(--cyan)"></i>Simulated output angle</span><span><i style="background:var(--lime)"></i>Target reference</span></div>
+        <div class="chart-foot"><span>LIVE STREAM · 0–12 SECOND RUN</span><span id="sampleHz">— Hz</span></div>
+        <div class="microcopy">The Arduino streams timestamped model data over USB. Close Arduino IDE Serial Monitor/Plotter before connecting the browser; only one app can use the serial port at a time.</div>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <div class="section-title"><div><div class="section-index">CONTROL BAY / 03</div><h2>Choose a controller. Watch it respond.</h2><p>Each button starts a 12-second deployment response from 20° to the selected reference. The SG90 follows the simulated model angle.</p></div><span class="tag">LIVE ARDUINO MODEL</span></div>
+    <div class="controller-layout">
+      <article class="panel">
+        <div class="panel-head"><h2>03 / Controller response + comparison</h2><div class="run-actions"><span id="runBadge">WAITING FOR RUN</span><button id="stopBtn" class="btn secondary small" disabled>Stop run</button></div></div>
+        <div class="pid-focus-row" role="group" aria-label="Recommended combined controller">
+          <button class="mode-btn pid-featured" data-mode="PID">PID <small>Combined controller · primary demonstration</small></button>
+        </div>
+        <div class="mode-tabs" role="group" aria-label="Other controller modes">
+          <button class="mode-btn" data-mode="P">P<small>Proportional</small></button>
+          <button class="mode-btn" data-mode="PI">PI<small>Integral added</small></button>
+          <button class="mode-btn" data-mode="PD">PD<small>Derivative added</small></button>
+          <button class="mode-btn compare-btn" data-mode="COMPARE">COMPARE<small>Run all 4</small></button>
+        </div>
+        <div class="selected-controller" id="selectedController">
+          <div class="selected-top"><span id="selectedModeTitle">P / PROPORTIONAL</span><span id="selectedGains">Kp 2.0 · Ki 0 · Kd 0</span></div>
+          <p id="selectedModeDescription">P responds to the current error. Click a controller to run it and see the real-time model response.</p>
+        </div>
+        <div class="panel-body" style="padding-top:10px">
+          <div class="chart-wrap"><canvas id="simChart" class="plot plot-small" aria-label="Illustrative controller step response"></canvas></div>
+          <div class="legend"><span><i style="background:var(--cyan)"></i>P</span><span><i style="background:var(--lime)"></i>PI</span><span><i style="background:var(--purple)"></i>PD</span><span><i style="background:var(--orange)"></i>PID</span><span><i style="background:#64748b"></i>Target</span></div>
+          <div class="metrics-grid">
+            <div class="mini-metric"><span>Latest model angle</span><strong id="metricAngle">—°</strong></div>
+            <div class="mini-metric"><span>Steady-state error |eₛₛ|</span><strong id="metricSS">—°</strong></div>
+            <div class="mini-metric"><span>Steady-state error (% of target)</span><strong id="metricSSPct">—%</strong></div>
+            <div class="mini-metric"><span>Percent overshoot (%OS)</span><strong id="metricOS">—%</strong></div>
+            <div class="mini-metric"><span>Peak time</span><strong id="metricTP">—</strong></div>
+            <div class="mini-metric"><span>Rise time (10–90%)</span><strong id="metricTR">—</strong></div>
+            <div class="mini-metric"><span>Settling time (2%)</span><strong id="metricTS">—</strong></div>
+            <div class="mini-metric"><span>Oscillation turns</span><strong id="metricOsc">—</strong></div>
+          </div>
+          <div class="microcopy" id="simCaption">Connect the board and choose a controller. Results are calculated from serial samples of the simulated plant.</div>
+          <div class="table-wrap">
+            <div class="table-heading">Comparison record <span>populates as each run completes</span></div>
+            <table class="results-table">
+              <thead><tr><th>Mode</th><th>|e<sub>ss</sub>| (°)</th><th>|e<sub>ss</sub>| (% of target)</th><th>%OS (vs final)</th><th>Peak time (s)</th><th>Rise (s)</th><th>Settling (s)</th><th>Turns</th></tr></thead>
+              <tbody>
+                <tr><th>P</th><td id="ss-P">—</td><td id="ssepct-P">—</td><td id="os-P">—</td><td id="tp-P">—</td><td id="tr-P">—</td><td id="ts-P">—</td><td id="osc-P">—</td></tr>
+                <tr><th>PI</th><td id="ss-PI">—</td><td id="ssepct-PI">—</td><td id="os-PI">—</td><td id="tp-PI">—</td><td id="tr-PI">—</td><td id="ts-PI">—</td><td id="osc-PI">—</td></tr>
+                <tr><th>PD</th><td id="ss-PD">—</td><td id="ssepct-PD">—</td><td id="os-PD">—</td><td id="tp-PD">—</td><td id="tr-PD">—</td><td id="ts-PD">—</td><td id="osc-PD">—</td></tr>
+                <tr><th>PID</th><td id="ss-PID">—</td><td id="ssepct-PID">—</td><td id="os-PID">—</td><td id="tp-PID">—</td><td id="tr-PID">—</td><td id="ts-PID">—</td><td id="osc-PID">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="microcopy" id="metricMethodNote">Metrics use the 12 s simulation. |eₛₛ| = |target − final angle|, averaged over the last 0.5 s. Steady-state error (% of target) = 100 × |eₛₛ| / |target|. Percent overshoot is relative to the attained final value; rise time is 10–90% of the observed excursion; settling time uses a ±2% final-response band (minimum ±0.5°); peak time is the first meaningful maximum. Oscillation turns count prominent direction reversals above 1°. These are simulated-model metrics, not measured SG90 shaft data.</div>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><h2>04 / Controller briefing</h2><span>QUICK THEORY</span></div>
+        <div class="panel-body">
+          <div class="theory-stack">
+            <div class="theory" data-theory="P"><div class="theory-symbol">P</div><div><h3>Proportional</h3><p>Output follows the present error. Stronger proportional action can speed up response, but a proportional-only system may retain steady-state error.</p></div></div>
+            <div class="theory" data-theory="PI"><div class="theory-symbol" style="color:var(--lime);background:#c8ff6b10">PI</div><div><h3>Proportional + Integral</h3><p>Integral action accumulates error over time and can remove persistent steady-state error. Too much integral action can cause overshoot and slower settling.</p></div></div>
+            <div class="theory" data-theory="PD"><div class="theory-symbol" style="color:var(--purple);background:#a99bff10">PD</div><div><h3>Proportional + Derivative</h3><p>Derivative action responds to how quickly the error changes. It can improve damping, but it does not generally eliminate steady-state error by itself.</p></div></div>
+            <div class="theory" data-theory="PID"><div class="theory-symbol" style="color:var(--orange);background:#ffb86b10">PID</div><div><h3>Proportional + Integral + Derivative</h3><p>Combines present, accumulated and changing error. Performance depends on the plant and tuning; PID is not automatically best in every test.</p></div></div>
+          </div>
+          <div class="formula">u(t) = Kp·e(t) + Ki·∫e(t)dt + Kd·de(t)/dt<br><span style="color:var(--muted)">e(t) = target − measured output</span></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title"><div><div class="section-index">SYSTEM LOGIC / 04</div><h2>From target to response.</h2><p>The model begins at the retracted position (20°) and deploys toward a fixed reference (90° by default). The same target and initial state are used for every controller in Compare mode.</p></div></div>
+    <div class="flow">
+      <div class="flow-step"><div class="num">01 / REFERENCE</div><strong>Target setpoint</strong><p>Numeric reference defaults to 90°. Reset returns to 90°; 20° is the simulated retracted state.</p></div>
+      <div class="flow-step"><div class="num">02 / CONTROLLER</div><strong>P / PI / PD / PID</strong><p>The selected algorithm calculates control effort from the reference and model feedback.</p></div>
+      <div class="flow-step"><div class="num">03 / PLANT MODEL</div><strong>Simulated dynamics</strong><p>A second-order model calculates angle and rate at a 20 ms sample interval.</p></div>
+      <div class="flow-step"><div class="num">04 / VISUALISE</div><strong>Servo + dashboard</strong><p>The SG90 follows the simulated angle; the browser plots streamed data and stores each run for comparison.</p></div>
+    </div>
+    <div class="callout" style="margin-top:14px"><strong>Correct interpretation:</strong> This prototype illustrates gear stow-to-deploy control using a generic position model. The controller and model run on the Arduino; the SG90 follows the computed angle. The knob is for manual positioning, not feedback measurement. The 20° and 90° positions are illustration angles, not values taken from a specific aircraft.</div>
+  </section>
+
+  <section class="engineering-section">
+    <div class="section-title"><div><div class="section-index">MODEL & ANALYSIS / 05</div><h2>What system are we controlling?</h2><p>The mathematical model, assumed parameters, controller gains and response metrics used in this demonstration.</p></div></div>
+    <div class="engineering-grid">
+      <article class="panel engineering-card">
+        <div class="panel-head"><h2>Plant equation</h2><span>SECOND-ORDER MODEL</span></div>
+        <div class="panel-body">
+          <p class="plain-copy">The equation is not taken from a specific aircraft or measured SG90. It is a canonical second-order teaching model used to approximate an actuator-driven position change with inertia-like dynamics and damping. The mathematical form follows standard second-order system theory; the numerical values ωₙ = 2.5 rad/s and ζ = 0.35 are chosen assumptions for a visible demonstration, not fitted aircraft parameters.</p>
+          <div class="equation">θ̈ + 2ζω<sub>n</sub> θ̇ + ω<sub>n</sub><sup>2</sup> θ = ω<sub>n</sub><sup>2</sup>u</div>
+          <div class="equation">G(s) = Θ(s)/U(s) = ω<sub>n</sub><sup>2</sup> / (s<sup>2</sup> + 2ζω<sub>n</sub>s + ω<sub>n</sub><sup>2</sup>)</div>
+          <p class="plain-copy">For this run, ω<sub>n</sub> = 2.5 rad/s and ζ = 0.35. Thus 2ζωₙ = 1.75 and ωₙ² = 6.25. Substitution gives:</p>
+          <div class="equation">θ̈ + 1.75θ̇ + 6.25θ = 6.25u<br>G(s) = 6.25 / (s<sup>2</sup> + 1.75s + 6.25)</div>
+          <p class="plain-copy">It is a <strong>second-order plant</strong> because the highest derivative is θ̈ and the denominator has degree two.</p>
+        </div>
+      </article>
+      <article class="panel engineering-card">
+        <div class="panel-head"><h2>Controller law</h2><span>PARALLEL PID FORM</span></div>
+        <div class="panel-body">
+          <div class="equation">e(t) = r(t) − θ(t)</div>
+          <div class="equation">u(t) = sat [ K<sub>p</sub>e(t) + K<sub>i</sub>∫e(τ)dτ − K<sub>d</sub>θ̇(t) ]</div>
+          <p class="plain-copy">The derivative is applied to the model output (derivative-on-measurement), reducing derivative kick at a setpoint change. The control command is limited to 0–180 equivalent degrees, and conditional integration limits windup. The model is discretised on the Arduino with a 20 ms sample interval using a simple forward-Euler update.</p>
+          <div class="parameters">
+            <div><span>K<sub>p</sub></span><strong>2.0</strong><small>proportional gain</small></div>
+            <div><span>K<sub>i</sub></span><strong>1.2</strong><small>integral gain (s⁻¹)</small></div>
+            <div><span>K<sub>d</sub></span><strong>0.65</strong><small>derivative gain (s)</small></div>
+            <div><span>T<sub>s</sub></span><strong>0.020 s</strong><small>sample interval</small></div>
+            <div><span>θ(0)</span><strong>20°</strong><small>retracted initial state</small></div>
+            <div><span>r</span><strong>90°</strong><small>default deployed target</small></div>
+          </div>
+          <p class="plain-copy">Integral action adds a controller state. Therefore, P and PD have a second-order closed-loop characteristic polynomial in this model, while PI and PID generally produce a third-order closed-loop characteristic polynomial.</p>
+        </div>
+      </article>
+      <article class="panel engineering-card wide-card">
+        <div class="panel-head"><h2>Closed-loop characteristic equations</h2><span>USING THE VALUES ABOVE</span></div>
+        <div class="panel-body equation-list">
+          <div><strong>P</strong><div class="equation">s² + 1.75s + 6.25(1 + K<sub>p</sub>) = 0<br><span class="equation-sub">At Kp = 2: s² + 1.75s + 18.75 = 0</span></div></div>
+          <div><strong>PD</strong><div class="equation">s² + (1.75 + 6.25K<sub>d</sub>)s + 6.25(1 + K<sub>p</sub>) = 0<br><span class="equation-sub">At Kp = 2, Kd = 0.65: s² + 5.8125s + 18.75 = 0</span></div></div>
+          <div><strong>PI</strong><div class="equation">s³ + 1.75s² + 6.25(1 + K<sub>p</sub>)s + 6.25K<sub>i</sub> = 0<br><span class="equation-sub">At Kp = 2, Ki = 1.2: s³ + 1.75s² + 18.75s + 7.5 = 0</span></div></div>
+          <div><strong>PID</strong><div class="equation">s³ + (1.75 + 6.25K<sub>d</sub>)s² + 6.25(1 + K<sub>p</sub>)s + 6.25K<sub>i</sub> = 0<br><span class="equation-sub">At Kp = 2, Ki = 1.2, Kd = 0.65: s³ + 5.8125s² + 18.75s + 7.5 = 0</span></div></div>
+        </div>
+        <p class="plain-copy">These characteristic equations assume the unsaturated linear model and unity feedback. The actual Arduino simulation also includes output saturation and conditional anti-windup, so measured time-domain responses should be read from the live data rather than inferred from these polynomials alone.</p>
+      </article>
+
+      <article class="panel engineering-card wide-card">
+        <div class="panel-head"><h2>Where the plant equation comes from</h2><span>MODEL DERIVATION</span></div>
+        <div class="panel-body">
+          <p class="plain-copy">A rotating mechanism with inertia, damping and a position-restoring effect can be approximated by a second-order equation. For a simplified position-following model, write:</p>
+          <div class="equation">J θ̈ + c θ̇ + k θ = k u</div>
+          <p class="plain-copy"><strong>J</strong> represents effective rotational inertia, <strong>c</strong> represents damping, <strong>k</strong> represents the restoring/position-following stiffness, and <strong>u</strong> is the commanded angular position in the normalised model. Divide through by J:</p>
+          <div class="equation">θ̈ + (c/J) θ̇ + (k/J) θ = (k/J) u</div>
+          <p class="plain-copy">Compare the coefficients with the standard second-order form. Define the natural frequency ω<sub>n</sub> = √(k/J) and damping ratio ζ = c/(2√(Jk)). Then c/J = 2ζω<sub>n</sub> and k/J = ω<sub>n</sub><sup>2</sup>:</p>
+          <div class="equation">θ̈ + 2ζω<sub>n</sub> θ̇ + ω<sub>n</sub><sup>2</sup> θ = ω<sub>n</sub><sup>2</sup> u</div>
+          <p class="plain-copy">For this demonstration, ω<sub>n</sub> = 2.5 rad/s and ζ = 0.35 are chosen as illustrative settings. Therefore 2ζω<sub>n</sub> = 1.75 and ω<sub>n</sub><sup>2</sup> = 6.25, giving θ̈ + 1.75θ̇ + 6.25θ = 6.25u. Taking the Laplace transform with zero initial conditions gives G(s) = 6.25/(s² + 1.75s + 6.25).</p>
+          <div class="note-box"><strong>Scientific honesty:</strong> this is a canonical teaching approximation, not coefficients measured from a real aircraft landing gear or the SG90. To claim a physically identified landing-gear model, we would need measured plant data and estimates of inertia, damping, actuator/linkage dynamics and loads.</div>
+        </div>
+      </article>
+      <article class="panel engineering-card wide-card">
+        <div class="panel-head"><h2>Expected steady-state error with these gains</h2><span>IDEAL UNSATURATED ANALYSIS</span></div>
+        <div class="panel-body">
+          <p class="plain-copy">The chosen plant has unity DC gain, G(0) = 1. For P-only control, at steady state θ = u = K<sub>p</sub>(r − θ). Rearranging gives:</p>
+          <div class="equation">θ<sub>ss</sub> = [K<sub>p</sub>/(1 + K<sub>p</sub>)] r &nbsp;;&nbsp; e<sub>ss</sub> = r/(1 + K<sub>p</sub>)</div>
+          <p class="plain-copy">With K<sub>p</sub> = 2 and a 90° target, the theoretical P steady-state error is 90/(1+2) = <strong>30°</strong>, or 100 × 30/90 = <strong>33.3% of the target</strong>. PD has the same ideal steady-state error because the derivative term becomes zero when the output stops changing. Integral action in PI and PID can drive step steady-state error to zero in a stable, unsaturated system. The 12-second reported value may still show a small residual because the run is finite and the implementation has saturation/anti-windup.</p>
+          <div class="parameters">
+            <div><span>P</span><strong>≈ 30°</strong><small>at 90° target, Kp=2</small></div>
+            <div><span>PI</span><strong>→ 0°</strong><small>ideal step, stable</small></div>
+            <div><span>PD</span><strong>≈ 30°</strong><small>at 90° target, Kp=2</small></div>
+            <div><span>PID</span><strong>→ 0°</strong><small>ideal step, stable</small></div>
+          </div>
+          <p class="plain-copy">These are theoretical expectations for the linear model, not values to copy into the results table. The comparison table and metric cards use the data produced by the actual Arduino simulation run. PI can also achieve near-zero error; PID is not the only controller with integral action.</p>
+        </div>
+      </article>
+      <article class="panel engineering-card wide-card">
+        <div class="panel-head"><h2>How to read the response metrics</h2><span>TIME-DOMAIN PERFORMANCE</span></div>
+        <div class="panel-body">
+          <dl class="mapping-list">
+            <div><dt>Steady-state error</dt><dd>|e<sub>ss</sub>| = |r − θ<sub>final</sub>|. This is the absolute difference between the target and the average angle over the final 0.5 seconds of the run.</dd></div>
+            <div><dt>Steady-state error (%)</dt><dd>Error percentage = 100 × |e<sub>ss</sub>| / |target|. It expresses the final target error as a percentage of the requested target angle. At the default 90° target, a 30° error is 33.3%.</dd></div>
+            <div><dt>Percent overshoot (%OS)</dt><dd>%OS = 100 × (θ<sub>peak</sub> − θ<sub>final</sub>) / |θ<sub>final</sub> − θ<sub>initial</sub>| for a rising response. It measures the peak above the controller’s attained final value; interpret it alongside steady-state error because P/PD may settle below the setpoint.</dd></div>
+            <div><dt>Rise time</dt><dd>Time taken to move from 10% to 90% of the measured response excursion from initial to final value. It indicates how quickly the system makes the main part of the move.</dd></div>
+            <div><dt>Peak time</dt><dd>Time from the start of the test to the first meaningful maximum. If no meaningful peak occurs during the 12-second window, the dashboard reports “No transient peak”.</dd></div>
+            <div><dt>Settling time</dt><dd>The earliest time after which the response stays inside a band around its final value. The dashboard uses ±2% of the response excursion, with a 0.5° minimum tolerance; a dash means it did not settle within the recorded window.</dd></div>
+            <div><dt>Oscillation turns</dt><dd>Count of prominent reversals in response direction. The algorithm ignores sub-degree changes and very closely spaced turns, so this is a simple indicator, not a formal frequency estimate.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="panel engineering-card">
+        <div class="panel-head"><h2>How this maps to landing gear</h2></div>
+        <div class="panel-body">
+          <dl class="mapping-list">
+            <div><dt>Reference, r</dt><dd>Requested gear position: deploy / retract angle.</dd></div>
+            <div><dt>Output, θ</dt><dd>Estimated model angle of the gear mechanism.</dd></div>
+            <div><dt>Error, e</dt><dd>Difference between desired and current model angle.</dd></div>
+            <div><dt>Damping, ζ</dt><dd>Represents resistance to oscillation in the simplified response.</dd></div>
+            <div><dt>Actuator command, u</dt><dd>Simplified control effort used to drive the model.</dd></div>
+          </dl>
+          <div class="note-box"><strong>Scope:</strong> this is a classroom positioning-model demonstration. Real aircraft gear includes actuator dynamics, linkage geometry, friction, structural loads and locking / position-confirmation mechanisms. It is not flight hardware or a validated aircraft model.</div>
+        </div>
+      </article>
+      <article class="panel engineering-card">
+        <div class="panel-head"><h2>What each controller changes</h2></div>
+        <div class="panel-body">
+          <dl class="mapping-list">
+            <div><dt>P</dt><dd>Immediate correction proportional to current error; can leave a nonzero final offset.</dd></div>
+            <div><dt>PI</dt><dd>Integral action accumulates error and can remove steady-state offset, but may increase overshoot or settling time.</dd></div>
+            <div><dt>PD</dt><dd>Derivative action reacts to output speed and adds damping; by itself it does not remove the P-controller's steady offset.</dd></div>
+            <div><dt>PID</dt><dd>Combines proportional correction, integral offset correction and derivative damping. It is often a useful balance when gains are tuned well; it is not guaranteed to win for every plant.</dd></div>
+          </dl>
+        </div>
+      </article>
+    </div>
+    <div class="references panel">
+      <div class="panel-head"><h2>References & method notes</h2><span>OPEN TECHNICAL SOURCES</span></div>
+      <div class="panel-body refs-list">
+        <p><a href="https://www.mathworks.com/help/control/ref/tf.html" target="_blank" rel="noopener">MathWorks, transfer-function models.</a> Gives the canonical second-order form in terms of natural frequency and damping ratio. Used for the form of the equation, not as a source of aircraft-specific parameters.</p>
+        <p><a href="https://ocw.mit.edu/courses/2-161-signal-processing-continuous-and-discrete-fall-2008/a9a6fa4c4c56513e2d5df392df6123ee_bode.pdf" target="_blank" rel="noopener">MIT OpenCourseWare, Second-Order Systems.</a> Reference for the canonical differential equation, damping ratio and natural frequency.</p>
+        <p><a href="https://www.mathworks.com/help/control/ref/dynamicsystem.stepinfo.html" target="_blank" rel="noopener">MathWorks, stepinfo — response metrics.</a> Reference for rise time, settling time, overshoot and peak time definitions.</p>
+        <p><a href="https://github.com/arduino-libraries/Servo/blob/master/docs/api.md" target="_blank" rel="noopener">Arduino Servo library API.</a> The standard library's read() reports the last commanded setpoint, not an independent physical shaft-angle measurement.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer"><div><b>FLIGHT SYSTEMS LAB</b><br>Scaled landing-gear positioning model · Control Systems project</div><div style="text-align:right">LOCAL WEB APP · DATA STAYS IN THIS SESSION<br>Second-order teaching model · not flight-certified hardware.</div></footer>
+</div>
+<script>
+(() => {
+    const get = id => document.getElementById(id);
+    const connectBtn = get('connectBtn');
+    const connectText = get('connectText');
+    const browserNotice = get('browserNotice');
+    const liveCanvas = get('liveChart');
+    const simCanvas = get('simChart');
+    const liveCtx = liveCanvas.getContext('2d');
+    const simCtx = simCanvas.getContext('2d');
+    // Keep the mode numbers in step with the Arduino sketch.
+    const modeIds = { P: 1, PI: 2, PD: 3, PID: 4 };
+    const MODEL_INITIAL_ANGLE = 20;
+    const TRIAL_SECONDS = 12;
+    const MODEL_WN = 2.5;
+    const MODEL_ZETA = 0.35;
+    let lastAdc = 512;
+    const modeNames = { 1: 'P', 2: 'PI', 3: 'PD', 4: 'PID' };
+    const modeColors = { P: '#2563eb', PI: '#0f766e', PD: '#7c3aed', PID: '#c16a19' };
+    const modeParams = {
+        P: { kp: 2.0, ki: 0, kd: 0, caption: 'P uses present error only. For the default 90° target it approaches about 60° in the ideal unsaturated model, leaving roughly 30° of steady-state error.' },
+        PI: { kp: 2.0, ki: 1.2, kd: 0, caption: 'PI accumulates error over time and should remove the constant offset in the stable, unsaturated ideal model. Integral action can increase overshoot or lengthen settling.' },
+        PD: { kp: 2.0, ki: 0, kd: 0.65, caption: 'PD adds rate-based damping and can reduce oscillation, but with no integral action it retains the P controller steady-state offset.' },
+        PID: { kp: 2.0, ki: 1.2, kd: 0.65, caption: 'PID combines proportional correction, integral offset correction and derivative damping. In this chosen simulation it gives a balanced trade-off; it is not universally best.' }
+    };
+    let port = null, reader = null, writer = null, keepReading = false, readTask = null;
+    let boardReady = false, runBusy = false, startAcked = false, startWatchdog = null;
+    let livePoints = [], intervalSamples = [], startedAt = Date.now();
+    let activeMode = 'P', comparisonActive = false, currentTarget = 90, currentRun = [];
+    let manualAlignActive = false;
+    // Samples are kept by controller so the final comparison uses the same runs.
+    const dataByMode = { P: [], PI: [], PD: [], PID: [] };
+    const metricsByMode = { P: null, PI: null, PD: null, PID: null };
+    let runFinished = false;
+
+    function showNotice(message) { browserNotice.textContent = message; browserNotice.classList.add('show'); }
+
+    function hideNotice() { browserNotice.classList.remove('show'); }
+
+    function setConnection(connected) {
+        boardReady = connected ? boardReady : false;
+        get('liveStatus').textContent = connected ? 'ARDUINO LINK ACTIVE' : 'AWAITING CONNECTION';
+        get('liveDot').style.background = connected ? 'var(--lime)' : 'var(--orange)';
+        get('liveDot').style.boxShadow = connected ? '0 0 13px #c8ff6b80' : 'none';
+        connectBtn.textContent = connected ? 'Disconnect Arduino' : '↗ Connect Arduino';
+        get('signalSource').textContent = connected ? 'USB serial · 115200' : 'Waiting for Arduino';
+        get('portStatus').textContent = connected ? 'USB SERIAL · CONNECTED' : 'SERIAL · 115200 BAUD';
+    }
+
+    function updateControlAvailability() {
+        document.querySelectorAll('.mode-btn').forEach(btn => { btn.disabled = !boardReady || runBusy; });
+        get('stopBtn').disabled = !boardReady || !runBusy;
+        get('manualBtn').disabled = !boardReady || runBusy;
+        get('centerBtn').disabled = !boardReady || runBusy;
+        get('targetInput').disabled = runBusy;
+        get('applyTargetBtn').disabled = !boardReady || runBusy;
+        get('resetTargetBtn').disabled = runBusy;
+        get('clearBtn').disabled = runBusy;
+    }
+
+    function angleToTarget(adc) { return 20 + Math.max(0, Math.min(1023, Number(adc) || 0)) * 140 / 1023; }
+
+    function updateControllerBrief(mode) {
+        const compare = mode === 'COMPARE';
+        const names = { P: 'PROPORTIONAL', PI: 'PROPORTIONAL + INTEGRAL', PD: 'PROPORTIONAL + DERIVATIVE', PID: 'PROPORTIONAL + INTEGRAL + DERIVATIVE' };
+        const p = modeParams[mode];
+        get('selectedModeTitle').textContent = compare ? 'COMPARE / FOUR-CONTROLLER RUN' : `${mode} / ${names[mode]}`;
+        get('selectedGains').textContent = compare ? 'Same target · same plant · 20° start' : `Kp ${p.kp.toFixed(1)} · Ki ${p.ki.toFixed(1)} · Kd ${p.kd.toFixed(2)}`;
+        get('selectedModeDescription').textContent = compare ? 'The Arduino runs P, PI, PD and PID one after another from 20° (retracted) to the same selected target. The large graph overlays all recorded responses.' : p.caption + ' The servo indicator starts at 20° (retracted) and visibly moves toward the selected deployment angle.';
+        document.querySelectorAll('[data-theory]').forEach(el => el.classList.toggle('selected', !compare && el.dataset.theory === mode));
+    }
+
+    function updateGauge(deg, adc) {
+        const safe = Math.min(180, Math.max(0, Number(deg) || 0));
+        const ratio = safe / 180;
+        get('angleText').textContent = `${safe.toFixed(1)}°`;
+        get('degValue').innerHTML = `${currentTarget.toFixed(1).replace(/\.0$/, '')}<em> °</em>`;
+        get('adcValue').innerHTML = `${Math.max(0, Math.min(1023, Number(adc) || 0))}<em> / 1023</em>`;
+        get('needle').setAttribute('transform', `rotate(${-90 + ratio * 180} 160 190)`);
+        get('gaugeArc').setAttribute('stroke-dasharray', `${ratio * 368} 368`);
+    }
+
+    function prepCanvas(canvas, ctx) {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { w: rect.width, h: rect.height };
+    }
+
+    function gridPlot(ctx, w, h, yMin, yMax, yLabel) {
+        const left = 43, right = 12, top = 12, bottom = 28, pw = w - left - right, ph = h - top - bottom;
+        ctx.clearRect(0, 0, w, h);
+        ctx.font = '10px ui-monospace, monospace';
+        for (let i = 0; i <= 4; i++) {
+            const y = top + ph * i / 4, val = yMax - (yMax - yMin) * i / 4;
+            ctx.strokeStyle = '#e2e8e3';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(left, y);
+            ctx.lineTo(w - right, y);
+            ctx.stroke();
+            ctx.fillStyle = '#65746a';
+            ctx.textAlign = 'right';
+            ctx.fillText(Number(val.toFixed(0)).toString(), left - 8, y + 3);
+        }
+        ctx.fillStyle = '#65746a';
+        ctx.textAlign = 'left';
+        ctx.fillText(yLabel, 4, 10);
+        return { left, right, top, bottom, pw, ph, x: t => left + t * pw, y: v => top + (yMax - v) / (yMax - yMin) * ph };
+    }
+
+    function autoYRange(pointSets, reference) {
+        const values = [];
+        for (const set of pointSets || []) {
+            for (const pt of set || []) {
+                const a = Number(pt.angle), t = Number(pt.target);
+                if (Number.isFinite(a))
+                    values.push(a);
+                if (Number.isFinite(t))
+                    values.push(t);
+            }
+        }
+        if (Number.isFinite(Number(reference)))
+            values.push(Number(reference));
+        if (!values.length)
+            return { min: 0, max: 180 };
+        let low = Math.min(...values), high = Math.max(...values);
+        const span = Math.max(15, high - low);
+        const pad = Math.max(6, span * .12);
+        low = Math.max(0, Math.floor((low - pad) / 10) * 10);
+        high = Math.min(180, Math.ceil((high + pad) / 10) * 10);
+        if (high - low < 30) {
+            const mid = (high + low) / 2;
+            low = Math.max(0, Math.floor((mid - 20) / 10) * 10);
+            high = Math.min(180, low + 40);
+            if (high - low < 40)
+                low = Math.max(0, high - 40);
+        }
+        return { min: low, max: high };
+    }
+
+    function drawLive() {
+        const { w, h } = prepCanvas(liveCanvas, liveCtx);
+        if (!livePoints.length) {
+            gridPlot(liveCtx, w, h, 0, 180, 'DEG');
+            return;
+        }
+        const target = Number(livePoints[livePoints.length - 1].target) || currentTarget;
+        const yr = autoYRange([livePoints], target);
+        const p = gridPlot(liveCtx, w, h, yr.min, yr.max, 'ANGLE / DEG');
+        // The live trial spans 0–12 s, filling the graph width.
+        liveCtx.strokeStyle = '#b77932';
+        liveCtx.lineWidth = 1.8;
+        liveCtx.setLineDash([7, 5]);
+        liveCtx.beginPath();
+        liveCtx.moveTo(p.left, p.y(target));
+        liveCtx.lineTo(w - p.right, p.y(target));
+        liveCtx.stroke();
+        liveCtx.setLineDash([]);
+        liveCtx.strokeStyle = '#286d63';
+        liveCtx.lineWidth = 3.2;
+        liveCtx.lineJoin = 'round';
+        liveCtx.lineCap = 'round';
+        liveCtx.beginPath();
+        livePoints.forEach((pt, i) => { const t = Number(pt.t ?? pt.elapsed ?? 0); const x = p.left + (Math.max(0, Math.min(TRIAL_SECONDS, t)) / TRIAL_SECONDS) * p.pw, y = p.y(pt.angle); if (i === 0)
+            liveCtx.moveTo(x, y);
+        else
+            liveCtx.lineTo(x, y); });
+        liveCtx.stroke();
+        liveCtx.fillStyle = '#8193ab';
+        liveCtx.font = '11px ui-monospace,monospace';
+        for (let t = 0; t <= TRIAL_SECONDS; t += 2) {
+            const x = p.left + t / TRIAL_SECONDS * p.pw;
+            liveCtx.textAlign = t === 0 ? 'left' : (t === TRIAL_SECONDS ? 'right' : 'center');
+            liveCtx.fillText(`${t}s`, x, h - 7);
+        }
+    }
+
+    function simulatedCurve(mode, target = currentTarget) {
+        const a = modeParams[mode];
+        let angle = MODEL_INITIAL_ANGLE, rate = 0, integ = 0;
+        const dt = .02, points = [];
+        for (let i = 0; i <= Math.round(TRIAL_SECONDS / dt); i++) {
+            const t = i * dt, error = target - angle, derivative = (mode === 'PD' || mode === 'PID') ? -a.kd * rate : 0;
+            const raw = a.kp * error + integ + derivative;
+            if (a.ki > 0) {
+                const high = raw >= 180 && error > 0, low = raw <= 0 && error < 0;
+                if (!high && !low)
+                    integ += a.ki * error * dt;
+                integ = Math.max(-180, Math.min(180, integ));
+            }
+            const u = Math.max(0, Math.min(180, a.kp * error + integ + derivative));
+            const acc = MODEL_WN * MODEL_WN * (u - angle) - 2 * MODEL_ZETA * MODEL_WN * rate;
+            rate += acc * dt;
+            angle += rate * dt;
+            angle = Math.max(0, Math.min(180, angle));
+            points.push({ t, angle, target, error, u });
+        }
+        return points;
+    }
+
+    function addLine(ctx, p, points, color, maxT = TRIAL_SECONDS) {
+        if (!points || !points.length)
+            return;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.2;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        points.forEach((pt, i) => { const t = Number(pt.t ?? pt.elapsed ?? 0), x = p.left + (Math.max(0, Math.min(maxT, t)) / maxT) * p.pw, y = p.y(Number(pt.angle)); if (i === 0)
+            ctx.moveTo(x, y);
+        else
+            ctx.lineTo(x, y); });
+        ctx.stroke();
+    }
+
+    // Work out the response measurements shown under the graph.
+    function calculateMetrics(points) {
+        if (!points || points.length < 5)
+            return null;
+        const pts = points.filter(p => Number.isFinite(Number(p.t)) && Number.isFinite(Number(p.angle))).slice().sort((a, b) => a.t - b.t);
+        if (pts.length < 5)
+            return null;
+        const lastT = Number(pts[pts.length - 1].t);
+        const finalWindow = pts.filter(p => Number(p.t) >= Math.max(0, lastT - 0.5));
+        const finalAngle = finalWindow.reduce((sum, p) => sum + Number(p.angle), 0) / Math.max(1, finalWindow.length);
+        const initial = MODEL_INITIAL_ANGLE; // retracted gear position at the start of each trial
+        const target = Number(pts[pts.length - 1].target);
+        const step = target - initial, excursion = finalAngle - initial;
+        let peakIdx = 0;
+        for (let i = 1; i < pts.length; i++)
+            if (Number(pts[i].angle) > Number(pts[peakIdx].angle))
+                peakIdx = i;
+        const peakAngle = Number(pts[peakIdx].angle);
+        // Standard textbook percent overshoot is measured relative to the attained final value.
+        // For a rising response: %OS = 100 * (peak - final) / (final - initial).
+        const overshoot = excursion > 0.5
+            ? Math.max(0, (peakAngle - finalAngle) / Math.abs(excursion) * 100)
+            : 0;
+        // Rise time is the 10–90% time across the response's attained excursion.
+        let riseTime = null;
+        if (Math.abs(excursion) > 0.5) {
+            const direction = Math.sign(excursion), lv10 = initial + 0.1 * excursion, lv90 = initial + 0.9 * excursion;
+            let t10 = null, t90 = null;
+            for (const p of pts) {
+                const y = Number(p.angle);
+                if (t10 === null && (direction > 0 ? y >= lv10 : y <= lv10))
+                    t10 = Number(p.t);
+                if (t90 === null && (direction > 0 ? y >= lv90 : y <= lv90))
+                    t90 = Number(p.t);
+            }
+            if (t10 !== null && t90 !== null && t90 >= t10)
+                riseTime = t90 - t10;
+        }
+        // Settling time: first entry after the last out-of-band sample, with the band centred on the attained final response.
+        const tolerance = Math.max(0.5, 0.02 * Math.abs(excursion));
+        let lastOutside = -1;
+        for (let i = 0; i < pts.length; i++)
+            if (Math.abs(Number(pts[i].angle) - finalAngle) > tolerance)
+                lastOutside = i;
+        const settleIndex = lastOutside + 1;
+        const settlingTime = (settleIndex < pts.length - 1 && settleIndex >= 0) ? Number(pts[settleIndex].t) : null;
+        // Count meaningful slope reversals as oscillation turns; tiny sub-degree sample noise is ignored.
+        let turns = 0, lastTurnAngle = initial, lastTurnTime = 0;
+        for (let i = 1; i < pts.length - 1; i++) {
+            const d1 = Number(pts[i].angle) - Number(pts[i - 1].angle);
+            const d2 = Number(pts[i + 1].angle) - Number(pts[i].angle);
+            if (d1 * d2 < 0 && Math.abs(Number(pts[i].angle) - lastTurnAngle) >= 1.0 && Number(pts[i].t) - lastTurnTime >= 0.08) {
+                turns++;
+                lastTurnAngle = Number(pts[i].angle);
+                lastTurnTime = Number(pts[i].t);
+            }
+        }
+        const meaningfulPeak = peakAngle > finalAngle + Math.max(1.0, 0.01 * Math.abs(finalAngle - initial));
+        const peakTime = (peakIdx < pts.length - 3 && meaningfulPeak) ? Number(pts[peakIdx].t) : null;
+        return { angle: Number(pts[pts.length - 1].angle), target, initial, finalAngle,
+            ssError: Math.abs(target - finalAngle), ssErrorPct: Math.abs(target - finalAngle) / Math.max(1, Math.abs(target)) * 100, signedError: target - finalAngle,
+            overshoot, peakAngle, peakTime, riseTime, settlingTime, turns, duration: lastT };
+    }
+
+    function fmtSec(value) { return value === null || !Number.isFinite(value) ? '—' : `${value.toFixed(2)} s`; }
+
+    function updateLiveMetrics(points, complete = false) {
+        const m = calculateMetrics(points);
+        if (!m)
+            return;
+        get('metricAngle').textContent = `${m.angle.toFixed(1)}°`;
+        get('metricSS').textContent = `${m.ssError.toFixed(1)}°`;
+        get('metricSSPct').textContent = `${m.ssErrorPct.toFixed(1)}%`;
+        get('metricOS').textContent = `${m.overshoot.toFixed(1)}%`;
+        get('metricTP').textContent = m.peakTime === null ? 'No transient peak' : fmtSec(m.peakTime);
+        get('metricTR').textContent = fmtSec(m.riseTime);
+        get('metricTS').textContent = fmtSec(m.settlingTime);
+        get('metricOsc').textContent = String(m.turns);
+        get('metricMethodNote').textContent = complete
+            ? 'Run complete. Final angle is averaged over the last 0.5 s. |e_ss| = |target − final angle|; error % = 100 × |e_ss| / |target|. Rise time is 10–90% of the observed 20°-to-final excursion; settling uses a ±2% final-response band with a 0.5° minimum. Percent overshoot is relative to the attained final response, so read it alongside setpoint error when P/PD settle below target. Oscillation turns count prominent >1° reversals.'
+            : 'Live estimates from samples received so far. Final angle uses the latest 0.5 s window; values may change until the 12 s run completes. Error % is relative to the target angle. Settling uses a ±2% band around the attained final response; overshoot is relative to the attained final response.';
+    }
+
+    function renderSummaryRow(mode, metrics) {
+        const fields = {
+            [`ss-${mode}`]: metrics ? `${metrics.ssError.toFixed(1)}` : '—',
+            [`ssepct-${mode}`]: metrics ? `${metrics.ssErrorPct.toFixed(1)}` : '—',
+            [`os-${mode}`]: metrics ? `${metrics.overshoot.toFixed(1)}` : '—',
+            [`tp-${mode}`]: metrics && metrics.peakTime !== null ? metrics.peakTime.toFixed(2) : '—',
+            [`tr-${mode}`]: metrics && metrics.riseTime !== null ? metrics.riseTime.toFixed(2) : '—',
+            [`ts-${mode}`]: metrics && metrics.settlingTime !== null ? metrics.settlingTime.toFixed(2) : '—',
+            [`osc-${mode}`]: metrics ? String(metrics.turns) : '—'
+        };
+        Object.entries(fields).forEach(([id, val]) => { const el = get(id); if (el)
+            el.textContent = val; });
+    }
+
+    function clearSummary() { ['P', 'PI', 'PD', 'PID'].forEach(m => { metricsByMode[m] = null; renderSummaryRow(m, null); }); }
+
+    function setBusy(value) { runBusy = value; updateControlAvailability(); }
+
+    function drawSimulation(mode) {
+        const { w, h } = prepCanvas(simCanvas, simCtx);
+        let selected = mode;
+        let dataSets = [];
+        if (mode === 'COMPARE') {
+            dataSets = ['P', 'PI', 'PD', 'PID'].map(m => dataByMode[m]).filter(d => d && d.length);
+        }
+        else {
+            const d = dataByMode[mode];
+            dataSets = [d && d.length ? d : simulatedCurve(mode)];
+        }
+        const yr = autoYRange(dataSets, currentTarget);
+        const p = gridPlot(simCtx, w, h, yr.min, yr.max, 'ANGLE / DEG');
+        const targetLine = currentTarget;
+        simCtx.strokeStyle = '#b77932';
+        simCtx.lineWidth = 1.8;
+        simCtx.setLineDash([7, 5]);
+        simCtx.beginPath();
+        simCtx.moveTo(p.left, p.y(targetLine));
+        simCtx.lineTo(w - p.right, p.y(targetLine));
+        simCtx.stroke();
+        simCtx.setLineDash([]);
+        if (mode === 'COMPARE') {
+            ['P', 'PI', 'PD', 'PID'].forEach(m => {
+                const data = dataByMode[m].length ? dataByMode[m] : [];
+                if (data.length)
+                    addLine(simCtx, p, data, modeColors[m], TRIAL_SECONDS);
+            });
+            get('simCaption').textContent = comparisonActive ? 'Comparison running: each mode starts at 20° (retracted) and uses the same exact selected reference. The y-axis scales to show the response clearly.' : 'Comparison overlays the four recorded Arduino-model responses. Each starts at 20° and shares the same target and angle scale.';
+        }
+        else {
+            const data = dataByMode[mode];
+            if (data && data.length)
+                addLine(simCtx, p, data, modeColors[mode], TRIAL_SECONDS);
+            else
+                addLine(simCtx, p, simulatedCurve(mode), modeColors[mode], TRIAL_SECONDS);
+            get('simCaption').textContent = modeParams[mode].caption + (data && data.length ? ' Live curve is streamed from the Arduino model.' : ' Preview shown until a connected Arduino run begins.') + ' Angle axis auto-scales for readability.';
+            selected = mode;
+        }
+        simCtx.fillStyle = '#8193ab';
+        simCtx.font = '11px ui-monospace,monospace';
+        simCtx.textAlign = 'left';
+        simCtx.fillText('0 s', p.left, h - 7);
+        simCtx.textAlign = 'right';
+        simCtx.fillText(`${TRIAL_SECONDS} s`, w - p.right, h - 7);
+        // Metrics are calculated from actual serial samples of the Arduino's model.
+        const metricMode = mode === 'COMPARE' ? activeMode : mode;
+        const pts = currentRun.length ? currentRun : (dataByMode[metricMode] || []);
+        updateLiveMetrics(pts, runFinished);
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+        get('degValue').innerHTML = `${currentTarget.toFixed(1).replace(/\.0$/, '')}<em> °</em>`;
+    }
+
+    function currentModeMatches(mode) { return mode === activeMode; }
+
+    // The Arduino sends one labelled line for each event or data sample.
+    function parseLine(line) {
+        if (!line)
+            return;
+        if (line.startsWith('READY,')) {
+            boardReady = true;
+            manualAlignActive = true;
+            connectText.textContent = 'Board ready · use Manual knob control to position pointer';
+            get('angleCaption').textContent = 'MANUAL KNOB → SERVO';
+            get('angleKicker').textContent = 'Manual indicator position';
+            get('signalSource').textContent = 'Potentiometer → servo indicator';
+            updateControlAvailability();
+            hideNotice();
+            return;
+        }
+        if (line.startsWith('KNOB,')) {
+            const m = line.match(/^KNOB,(\d+),([\d.]+)/);
+            if (!m)
+                return;
+            const adc = Number(m[1]), knobAngle = Number(m[2]);
+            if (!Number.isFinite(adc) || !Number.isFinite(knobAngle))
+                return;
+            lastAdc = adc;
+            get('adcValue').innerHTML = `${adc}<em> / 1023</em>`;
+            if (manualAlignActive && !runBusy) {
+                get('angleCaption').textContent = 'MANUAL KNOB → SERVO';
+                get('angleKicker').textContent = 'Manual indicator position';
+                get('signalSource').textContent = 'Potentiometer → servo indicator';
+                updateGauge(knobAngle, adc);
+            }
+            return;
+        }
+        if (line.startsWith('SETPOINT,')) {
+            const val = Number(line.split(',')[1]);
+            if (Number.isFinite(val)) {
+                currentTarget = val;
+                get('targetInput').value = String(Number(val.toFixed(1)));
+                get('degValue').innerHTML = `${currentTarget.toFixed(1).replace(/\.0$/, '')}<em> °</em>`;
+                drawSimulation(comparisonActive ? 'COMPARE' : activeMode);
+            }
+            return;
+        }
+        if (line === 'CENTERED,90') {
+            manualAlignActive = false;
+            updateGauge(90, lastAdc);
+            get('angleCaption').textContent = 'CENTRED AT 90°';
+            get('angleKicker').textContent = 'Servo indicator command';
+            get('signalSource').textContent = 'Fixed centre command';
+            get('runBadge').textContent = 'INDICATOR CENTRED';
+            connectText.textContent = 'Indicator centred at 90° · run starts from 20°';
+            return;
+        }
+        if (line === 'MANUAL_READY') {
+            manualAlignActive = true;
+            get('runBadge').textContent = 'MANUAL ALIGNMENT';
+            get('angleCaption').textContent = 'MANUAL KNOB → SERVO';
+            get('angleKicker').textContent = 'Manual position / indicator angle';
+            connectText.textContent = 'Manual alignment active · turn the knob';
+            updateControlAvailability();
+            return;
+        }
+        if (line === 'COMPARE_START') {
+            manualAlignActive = false;
+            get('angleCaption').textContent = 'SIMULATED OUTPUT';
+            get('angleKicker').textContent = 'Simulated plant output';
+            startAcked = true;
+            if (startWatchdog) {
+                clearTimeout(startWatchdog);
+                startWatchdog = null;
+            }
+            comparisonActive = true;
+            runFinished = false;
+            setBusy(true);
+            clearSummary();
+            ['P', 'PI', 'PD', 'PID'].forEach(m => dataByMode[m] = []);
+            currentRun = [];
+            livePoints = [];
+            get('runBadge').textContent = 'COMPARISON RUNNING';
+            get('liveEmpty').style.display = 'none';
+            updateControllerBrief('COMPARE');
+            drawLive();
+            drawSimulation('COMPARE');
+            return;
+        }
+        if (line.startsWith('START,')) {
+            manualAlignActive = false;
+            get('angleCaption').textContent = 'SIMULATED OUTPUT';
+            get('angleKicker').textContent = 'Simulated plant output';
+            startAcked = true;
+            if (startWatchdog) {
+                clearTimeout(startWatchdog);
+                startWatchdog = null;
+            }
+            setBusy(true);
+            const s = line.split(',');
+            const name = s[2];
+            if (!modeParams[name])
+                return;
+            activeMode = name;
+            currentTarget = Number(s[3]);
+            get('targetInput').value = String(Number(currentTarget.toFixed(1)));
+            currentRun = [];
+            livePoints = [];
+            runFinished = false;
+            updateControllerBrief(comparisonActive ? 'COMPARE' : name);
+            if (!comparisonActive)
+                dataByMode[name] = [];
+            get('runBadge').textContent = `RUNNING · ${name}`;
+            connectText.textContent = `Connected · running ${name}`;
+            get('liveEmpty').style.display = 'none';
+            get('simCaption').textContent = `${name} controller running on Arduino model with target ${currentTarget.toFixed(0)}°. Servo is following the simulated angle.`;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === name));
+            get('degValue').innerHTML = `${currentTarget.toFixed(1).replace(/\.0$/, '')}<em> °</em>`;
+            drawSimulation(comparisonActive ? 'COMPARE' : name);
+            return;
+        }
+        if (line.startsWith('TEL,')) {
+            const s = line.split(',');
+            if (s.length < 8)
+                return;
+            const elapsed = Number(s[1]) / 1000, name = modeNames[Number(s[2])], target = Number(s[3]), angle = Number(s[4]), error = Number(s[5]), output = Number(s[6]), adc = Number(s[7]);
+            get('angleCaption').textContent = 'SIMULATED OUTPUT';
+            get('angleKicker').textContent = 'Simulated plant output';
+            if (!modeParams[name] || ![elapsed, target, angle, error, output, adc].every(Number.isFinite))
+                return;
+            currentTarget = target;
+            const pt = { t: elapsed, elapsed, wall: Date.now(), mode: name, target, angle, error, output, adc };
+            currentRun.push(pt);
+            dataByMode[name].push(pt);
+            livePoints.push(pt);
+            if (currentRun.length % 5 === 0)
+                updateLiveMetrics(currentRun, false);
+            if (livePoints.length > 600)
+                livePoints.shift();
+            intervalSamples.push(Date.now());
+            intervalSamples = intervalSamples.filter(t => Date.now() - t <= 5000);
+            get('liveCount').textContent = `${livePoints.length} samples`;
+            get('sampleHz').textContent = `${(intervalSamples.length / 5).toFixed(1)} Hz`;
+            get('liveEmpty').style.display = 'none';
+            updateGauge(angle, adc);
+            drawLive();
+            drawSimulation(comparisonActive ? 'COMPARE' : name);
+            return;
+        }
+        if (line.startsWith('END,')) {
+            runFinished = true;
+            const s = line.split(',');
+            const endedMode = (s[2] || activeMode);
+            metricsByMode[endedMode] = calculateMetrics(dataByMode[endedMode] || currentRun);
+            renderSummaryRow(endedMode, metricsByMode[endedMode]);
+            if (endedMode === activeMode || !comparisonActive)
+                updateLiveMetrics(dataByMode[endedMode] || currentRun, true);
+            get('runBadge').textContent = `COMPLETE · ${endedMode}`;
+            if (!comparisonActive) {
+                setBusy(false);
+                connectText.textContent = 'Board ready · select a controller';
+            }
+            return;
+        }
+        if (line === 'COMPARE_END') {
+            comparisonActive = false;
+            runFinished = true;
+            setBusy(false);
+            get('runBadge').textContent = 'COMPARISON COMPLETE';
+            connectText.textContent = 'Comparison complete · select a controller';
+            drawSimulation('COMPARE');
+            return;
+        }
+        if (line === 'STOPPED') {
+            comparisonActive = false;
+            runFinished = true;
+            setBusy(false);
+            get('runBadge').textContent = 'STOPPED';
+            connectText.textContent = 'Run stopped · board ready';
+            return;
+        }
+        if (line.startsWith('BUSY,')) {
+            showNotice('The Arduino is already running a trial. Wait for completion, or use Stop run.');
+            return;
+        }
+    }
+
+    async function readSerialLoop() {
+        const decoder = new TextDecoder();
+        let buffer = '';
+        try {
+            while (keepReading && reader) {
+                const { value, done } = await reader.read();
+                if (done)
+                    break;
+                if (value) {
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split(/\r?\n/);
+                    buffer = lines.pop() || '';
+                    for (const line of lines)
+                        parseLine(line.trim());
+                }
+            }
+        }
+        catch (err) {
+            if (keepReading)
+                showNotice('Serial stream stopped: ' + (err.message || err));
+        }
+    }
+
+    async function disconnectSerial() {
+        if (writer && runBusy) {
+            try {
+                await writer.write(new TextEncoder().encode('STOP\n'));
+            }
+            catch (e) { }
+        }
+        keepReading = false;
+        boardReady = false;
+        runBusy = false;
+        try {
+            if (reader)
+                await reader.cancel();
+        }
+        catch (e) { }
+        try {
+            if (readTask)
+                await readTask;
+        }
+        catch (e) { }
+        try {
+            if (reader)
+                reader.releaseLock();
+        }
+        catch (e) { }
+        reader = null;
+        try {
+            if (writer)
+                writer.releaseLock();
+        }
+        catch (e) { }
+        writer = null;
+        const oldPort = port;
+        port = null;
+        try {
+            if (oldPort)
+                await oldPort.close();
+        }
+        catch (e) { }
+        setConnection(false);
+        connectText.textContent = 'Disconnected · ready to reconnect';
+        updateControlAvailability();
+    }
+    // Open the USB serial connection, then wait for the Arduino to reply.
+    connectBtn.addEventListener('click', async () => {
+        hideNotice();
+        if (port) {
+            await disconnectSerial();
+            return;
+        }
+        if (!('serial' in navigator)) {
+            showNotice('Web Serial is unavailable. Use current Chrome or Edge on desktop and open the page from http://localhost:8000.');
+            return;
+        }
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            reader = port.readable.getReader();
+            writer = port.writable.getWriter();
+            keepReading = true;
+            boardReady = false;
+            runBusy = false;
+            setConnection(true);
+            connectText.textContent = 'Waiting for Arduino handshake…';
+            updateControlAvailability();
+            readTask = readSerialLoop();
+            // Opening a Uno serial port may reset the board. Retry HELLO until READY arrives.
+            const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+            for (let attempt = 0; attempt < 10 && !boardReady; attempt++) {
+                await delay(250);
+                if (writer && !boardReady) {
+                    try {
+                        await writer.write(new TextEncoder().encode('HELLO\n'));
+                    }
+                    catch (e) { }
+                }
+            }
+            if (!boardReady)
+                showNotice('The COM port opened, but the Arduino did not send READY. Re-upload the v6 firmware, then disconnect and reconnect.');
+        }
+        catch (err) {
+            try {
+                if (reader) {
+                    await reader.cancel();
+                    reader.releaseLock();
+                }
+            }
+            catch (e) { }
+            try {
+                if (writer)
+                    writer.releaseLock();
+            }
+            catch (e) { }
+            try {
+                if (port)
+                    await port.close();
+            }
+            catch (e) { }
+            port = null;
+            reader = null;
+            writer = null;
+            keepReading = false;
+            setConnection(false);
+            showNotice('Could not connect. Close Arduino Serial Monitor/Plotter and check the COM port. ' + (err.message || err));
+        }
+    });
+
+    async function sendCommand(command) {
+        if (!writer || !boardReady) {
+            showNotice('Connect Arduino and wait for the READY status before starting a run.');
+            return false;
+        }
+        try {
+            await writer.write(new TextEncoder().encode(command + '\n'));
+            hideNotice();
+            return true;
+        }
+        catch (err) {
+            showNotice('Could not send the controller command: ' + (err.message || err));
+            return false;
+        }
+    }
+
+    function readTargetInput() {
+        const raw = Number(get('targetInput').value);
+        if (!Number.isFinite(raw) || raw < 20 || raw > 160) {
+            showNotice('Enter a target angle from 20° to 160°.');
+            get('targetInput').focus();
+            return null;
+        }
+        return Math.round(raw * 10) / 10;
+    }
+
+    function displayTarget(value) { currentTarget = value; get('degValue').innerHTML = `${currentTarget.toFixed(1).replace(/\.0$/, '')}<em> °</em>`; }
+    get('targetInput').addEventListener('change', () => {
+        const value = readTargetInput();
+        if (value === null)
+            return;
+        displayTarget(value);
+        drawSimulation(comparisonActive ? 'COMPARE' : activeMode);
+    });
+    get('applyTargetBtn').addEventListener('click', async () => {
+        if (runBusy)
+            return;
+        const value = readTargetInput();
+        if (value === null)
+            return;
+        displayTarget(value);
+        if (boardReady) {
+            await sendCommand('SETPOINT:' + value.toFixed(1));
+            connectText.textContent = `Reference set to ${value.toFixed(1)}° · press a controller to run`;
+        }
+        else {
+            connectText.textContent = 'Reference set locally; connect Arduino to run';
+        }
+        drawSimulation(comparisonActive ? 'COMPARE' : activeMode);
+    });
+    get('resetTargetBtn').addEventListener('click', async () => {
+        if (runBusy)
+            return;
+        get('targetInput').value = '90';
+        displayTarget(90);
+        if (boardReady) {
+            await sendCommand('SETPOINT:90.0');
+            connectText.textContent = 'Reference reset to exactly 90°';
+        }
+        drawSimulation(comparisonActive ? 'COMPARE' : activeMode);
+    });
+    get('centerBtn').addEventListener('click', async () => {
+        if (runBusy || !boardReady)
+            return;
+        const ok = await sendCommand('CENTER');
+        if (!ok)
+            return;
+        manualAlignActive = false;
+        updateGauge(90, lastAdc);
+        get('angleCaption').textContent = 'CENTRED AT 90°';
+        get('angleKicker').textContent = 'Servo indicator command';
+        get('signalSource').textContent = 'Fixed centre command';
+        get('runBadge').textContent = 'CENTRING…';
+    });
+    // A controller button starts a new run; Compare runs all four in sequence.
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.addEventListener('click', async () => {
+        if (runBusy || !boardReady)
+            return;
+        const mode = btn.dataset.mode;
+        const selectedTarget = readTargetInput();
+        if (selectedTarget === null)
+            return;
+        displayTarget(selectedTarget);
+        setBusy(true);
+        runFinished = false;
+        comparisonActive = (mode === 'COMPARE');
+        if (mode === 'COMPARE') {
+            activeMode = 'P';
+            currentRun = [];
+            livePoints = [];
+            clearSummary();
+            ['P', 'PI', 'PD', 'PID'].forEach(m => dataByMode[m] = []);
+            updateControllerBrief('COMPARE');
+            drawSimulation('COMPARE');
+            get('runBadge').textContent = 'STARTING COMPARISON';
+        }
+        else {
+            activeMode = mode;
+            currentRun = [];
+            livePoints = [];
+            dataByMode[mode] = [];
+            updateControllerBrief(mode);
+            drawLive();
+            drawSimulation(mode);
+            get('runBadge').textContent = `STARTING · ${mode}`;
+        }
+        startAcked = false;
+        const targetOk = await sendCommand('SETPOINT:' + selectedTarget.toFixed(1));
+        if (!targetOk) {
+            comparisonActive = false;
+            setBusy(false);
+            return;
+        }
+        const ok = await sendCommand(mode === 'COMPARE' ? 'COMPARE' : 'MODE:' + mode);
+        if (!ok) {
+            comparisonActive = false;
+            setBusy(false);
+            drawSimulation(mode === 'COMPARE' ? 'COMPARE' : mode);
+            return;
+        }
+        if (!startAcked) {
+            startWatchdog = setTimeout(() => {
+                if (!startAcked && runBusy) {
+                    comparisonActive = false;
+                    setBusy(false);
+                    get('runBadge').textContent = 'NO START ACK';
+                    showNotice('No START acknowledgement arrived. Check that the v6 firmware is uploaded and the browser owns the COM port, then reconnect.');
+                }
+            }, 3000);
+        }
+    }));
+    get('manualBtn').addEventListener('click', async () => {
+        if (runBusy || !boardReady)
+            return;
+        manualAlignActive = false;
+        get('runBadge').textContent = 'ENTERING MANUAL KNOB CONTROL';
+        const ok = await sendCommand('MANUAL');
+        if (!ok) {
+            get('runBadge').textContent = 'READY';
+            return;
+        }
+    });
+    get('stopBtn').addEventListener('click', async () => {
+        if (!runBusy)
+            return;
+        const ok = await sendCommand('STOP');
+        if (ok) {
+            get('runBadge').textContent = 'STOPPING…';
+        }
+    });
+    get('clearBtn').addEventListener('click', () => {
+        if (runBusy)
+            return;
+        livePoints = [];
+        intervalSamples = [];
+        get('liveCount').textContent = '0 samples';
+        get('sampleHz').textContent = '— Hz';
+        get('liveEmpty').style.display = 'grid';
+        ['P', 'PI', 'PD', 'PID'].forEach(m => dataByMode[m] = []);
+        currentRun = [];
+        clearSummary();
+        drawLive();
+        drawSimulation(comparisonActive ? 'COMPARE' : activeMode);
+    });
+
+    function updateClock() { const sec = Math.floor((Date.now() - startedAt) / 1000); get('uptime').textContent = `SESSION ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
+    window.addEventListener('resize', () => { drawLive(); drawSimulation(comparisonActive ? 'COMPARE' : activeMode); });
+    if (!('serial' in navigator))
+        showNotice('Web Serial is unavailable in this browser. Use current Chrome or Edge on desktop at http://localhost:8000.');
+    setConnection(false);
+    updateControlAvailability();
+    updateClock();
+    setInterval(updateClock, 1000);
+    displayTarget(90);
+    updateGauge(MODEL_INITIAL_ANGLE, 512);
+    updateControllerBrief('PID');
+    drawLive();
+    drawSimulation('PID');
+})();
+</script>
+</body>
+</html>
